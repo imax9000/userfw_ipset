@@ -1,33 +1,25 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/module.h>
+#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <userfw/module.h>
 #include <userfw/io.h>
 #include "ipset.h"
 
-static userfw_action_descr ipset_actions[] =
-{
-};
+MALLOC_DEFINE(M_USERFW_IPSET, "userfw_ipset", "Memory used by userfw_ipset modules");
 
-static userfw_match_descr ipset_matches[] =
-{
-};
-
-static userfw_cmd_descr ipset_cmds[] =
-{
-};
-
+/*
 static userfw_modinfo ipset_modinfo =
 {
 	.id = USERFW_IPSET_MOD,
 	.name = "ipset",
-	.nactions = sizeof(ipset_actions)/sizeof(ipset_actions[0]),
-	.nmatches = sizeof(ipset_matches)/sizeof(ipset_matches[0]),
-	.ncmds = sizeof(ipset_cmds)/sizeof(ipset_cmds[0]),
-	.actions = ipset_actions,
-	.matches = ipset_matches,
-	.cmds = ipset_cmds
+	.nactions = 0,
+	.nmatches = 0,
+	.ncmds = 0,
+	.actions = NULL,
+	.matches = NULL,
+	.cmds = NULL
 };
 
 static int
@@ -60,3 +52,4 @@ MODULE_VERSION(userfw_ipset, 1);
 MODULE_DEPEND(userfw_ipset, userfw_core, 1, 1, 1);
 
 DECLARE_MODULE(userfw_ipset, ipset_mod, SI_SUB_USERFW, SI_ORDER_USERFW_MOD);
+*/
