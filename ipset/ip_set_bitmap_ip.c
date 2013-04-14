@@ -289,7 +289,7 @@ cmd_create(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, st
 	mask = ntohl(args[1].ipv4.mask);
 	if (is_mask_contiguous(mask) && (masklen = mask_to_cidr(mask)) >= 16)
 	{
-		map = malloc(sizeof(*map), M_USERFW_IPSET, M_WAITOK);
+		map = malloc(sizeof(*map), M_USERFW_IPSET, M_WAITOK | M_ZERO);
 		map->first_ip = ip & mask;
 		map->last_ip = ip | (~mask);
 		map->elements = map->last_ip - map->first_ip + 1;
@@ -297,7 +297,7 @@ cmd_create(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, st
 		map->netmask = 32;
 		map->timeout = 0;
 		map->memsize = bitmap_bytes(map->elements);
-		map->members = malloc(map->memsize, M_USERFW_IPSET, M_WAITOK);
+		map->members = malloc(map->memsize, M_USERFW_IPSET, M_WAITOK | M_ZERO);
 	}
 	else
 	{
