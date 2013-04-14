@@ -263,10 +263,10 @@ mask_to_cidr(uint32_t mask)
 static inline size_t
 bitmap_bytes(size_t nbits)
 {
-	if (nbits / sizeof(long) * sizeof(long) == nbits)
-		return nbits / sizeof(long);
+	if (nbits / (sizeof(long) * 8) * sizeof(long) * 8 == nbits)
+		return nbits / 8;
 	else
-		return nbits / sizeof(long) + 1;
+		return (nbits / (sizeof(long) * 8) + 1) * sizeof(long);
 }
 
 static int
