@@ -13,6 +13,7 @@
 #include <sys/systm.h>
 #include <sys/module.h>
 #include <sys/kernel.h>
+#include <sys/limits.h>
 #include <machine/atomic.h>
 #include <userfw/module.h>
 #include <userfw/io.h>
@@ -265,10 +266,10 @@ mask_to_cidr(uint32_t mask)
 static inline size_t
 bitmap_bytes(size_t nbits)
 {
-	if (nbits / (sizeof(long) * 8) * sizeof(long) * 8 == nbits)
-		return nbits / 8;
+	if (nbits / (sizeof(long) * CHAR_BIT) * sizeof(long) * CHAR_BIT == nbits)
+		return nbits / CHAR_BIT;
 	else
-		return (nbits / (sizeof(long) * 8) + 1) * sizeof(long);
+		return (nbits / (sizeof(long) * CHAR_BIT) + 1) * sizeof(long);
 }
 
 static int
