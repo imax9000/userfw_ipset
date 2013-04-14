@@ -84,7 +84,9 @@ bitmap_ip_destroy(struct bitmap_ip *map)
 static inline struct bitmap_ip*
 get_instance(uint16_t id)
 {
-	return maps[id];
+	/* Warning: race condition possible when another thread removes instance
+	   just after this function returned a pointer */
+	return (struct bitmap_ip *)atomic_load_acq_ptr(&maps[id]);
 }
 
 static void
