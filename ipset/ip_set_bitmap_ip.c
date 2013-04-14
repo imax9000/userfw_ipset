@@ -19,7 +19,7 @@
 #include "ipset.h"
 #include "ip_set_bitmap_ip.h"
 #include "pfxlen.h"
-#include <linux/bitops.h> /* XXX: from sys/ofed, */
+#include "bitops.h"
 
 /* Type structure */
 struct bitmap_ip {
