@@ -279,7 +279,7 @@ cmd_create(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, st
 	struct bitmap_ip *map = NULL;
 	uint32_t ip, mask, masklen;
 
-	if (maps[args[0].uint16.value] != NULL)
+	if (get_instance(args[0].uint16.value) != NULL)
 	{
 		userfw_msg_reply_error(so, cookie, EEXIST);
 		return EEXIST;
@@ -319,8 +319,29 @@ cmd_create(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, st
 static int
 cmd_destroy(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, struct thread *th)
 {
-	userfw_msg_reply_error(so, cookie, EOPNOTSUPP);
-	return EOPNOTSUPP;
+	int ret = 0;
+	struct bitmap_ip *map = NULL;
+
+	map = get_instance(args[0].uint16.value);
+	if (map != NULL)
+	{
+		if (atomic_cmpset_ptr(&(map[args[0].uint16.value]), map, NULL))
+		{
+			bitmap_ip_destroy(map);
+			free(map, M_USERFW_IPSET);
+		}
+		else
+		{
+			ret = EEXIST; /* XXX: what else? */
+		}
+	}
+	else
+	{
+		ret = ENOENT;
+	}
+
+	userfw_msg_reply_error(so, cookie, ret);
+	return ret;
 }
 
 static userfw_cmd_descr bitmap_ip_cmds[] =
