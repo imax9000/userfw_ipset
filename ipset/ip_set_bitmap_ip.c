@@ -104,6 +104,7 @@ match_bitmap_ip(struct mbuf **mb, userfw_chk_args *args, userfw_match *m, userfw
 {
 	struct bitmap_ip *map = NULL;
 	uint32_t addr;
+	uint16_t id;
 	struct ip *ip = mtod(*mb, struct ip *);
 
 	VERIFY_OPCODE2(m, USERFW_IPSET_BITMAP_IP_MOD, M_LOOKUP_SRC, M_LOOKUP_DST, 0);
@@ -124,8 +125,8 @@ match_bitmap_ip(struct mbuf **mb, userfw_chk_args *args, userfw_match *m, userfw
 	{
 		if (addr >= map->first_ip && addr <= map->last_ip)
 		{
-			addr = ip_to_id(map, addr);
-			return bitmap_ip_test(map, &addr);
+			id = ip_to_id(map, addr);
+			return bitmap_ip_test(map, &id);
 		}
 	}
 	return 0;
@@ -139,7 +140,8 @@ static userfw_match_descr bitmap_ip_matches[] = {
 static int
 cmd_add_delete_test(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, struct thread *th)
 {
-	uint32_t ip, id;
+	uint32_t ip;
+	uint16_t id;
 	int ret = EOPNOTSUPP;
 	struct bitmap_ip *map;
 
