@@ -14,7 +14,10 @@
 #include <sys/module.h>
 #include <sys/kernel.h>
 #include <sys/limits.h>
+#include <sys/mbuf.h>
 #include <machine/atomic.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
 #include <userfw/module.h>
 #include <userfw/io.h>
 #include "ipset.h"
@@ -95,6 +98,43 @@ bitmap_ip_flush(struct bitmap_ip *map)
 {
 	bzero(map->members, map->memsize);
 }
+
+static int
+match_bitmap_ip(struct mbuf **mb, userfw_chk_args *args, userfw_match *m, userfw_cache *cache, userfw_arg *marg)
+{
+	struct bitmap_ip *map = NULL;
+	uint32_t addr;
+	struct ip *ip = mtod(*mb, struct ip *);
+
+	VERIFY_OPCODE2(m, USERFW_IPSET_BITMAP_IP_MOD, M_LOOKUP_SRC, M_LOOKUP_DST, 0);
+
+	if (ip->ip_v != 4)
+		return 0;
+
+	if (m->op == M_LOOKUP_DST) {
+		addr = ntohl(ip->ip_dst.s_addr);
+	}
+	else
+	{
+		addr = ntohl(ip->ip_src.s_addr);
+	}
+
+	map = get_instance(m->args[0].uint16.value);
+	if (map != NULL)
+	{
+		if (addr >= map->first_ip && addr <= map->last_ip)
+		{
+			addr = ip_to_id(map, addr);
+			return bitmap_ip_test(map, &addr);
+		}
+	}
+	return 0;
+}
+
+static userfw_match_descr bitmap_ip_matches[] = {
+	{M_LOOKUP_DST,	1,	{T_UINT16},	"lookup-dst",	match_bitmap_ip}
+	,{M_LOOKUP_SRC,	1,	{T_UINT16},	"lookup-src",	match_bitmap_ip}	
+};
 
 static int
 cmd_add_delete_test(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, struct thread *th)
@@ -360,10 +400,10 @@ static userfw_modinfo ipset_bitmap_ip_modinfo =
 	.id = USERFW_IPSET_BITMAP_IP_MOD,
 	.name = "ipset_bitmap_ip",
 	.nactions = 0,
-	.nmatches = 0,
+	.nmatches = sizeof(bitmap_ip_matches)/sizeof(bitmap_ip_matches[0]),
 	.ncmds = sizeof(bitmap_ip_cmds)/sizeof(bitmap_ip_cmds[0]),
 	.actions = NULL,
-	.matches = NULL,
+	.matches = bitmap_ip_matches,
 	.cmds = bitmap_ip_cmds
 };
 
