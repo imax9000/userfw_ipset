@@ -453,5 +453,8 @@ static moduledata_t ipset_bitmap_ip_mod =
 
 MODULE_VERSION(userfw_ipset_bitmap_ip, 1);
 DEPEND_ON_USERFW_CORE(userfw_ipset_bitmap_ip);
+#if USERFW_KABI_VERSION < 2
+#error "This module will not work correctly with userfw 0.1.*. If you sure that you can deal with that - remove this line."
+#endif
 
 DECLARE_MODULE(userfw_ipset_bitmap_ip, ipset_bitmap_ip_mod, SI_SUB_USERFW, SI_ORDER_USERFW_MOD + 1);
