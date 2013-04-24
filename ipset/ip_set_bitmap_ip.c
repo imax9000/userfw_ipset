@@ -100,6 +100,68 @@ bitmap_ip_flush(struct bitmap_ip *map)
 }
 
 static int
+action_add_delete_ip(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache, int *continue_, uint32_t flags)
+{
+	struct bitmap_ip *map = NULL;
+	struct ip *ip = mtod(*mb, struct ip *);
+	uint32_t addr;
+	uint16_t id;
+
+	*continue_ = 1;
+
+	if (flags & USERFW_ACTION_FLAG_SECOND_PASS)
+		return 0;
+
+	if (ip->ip_v != 4)
+		return 0;
+
+	switch (a->op)
+	{
+	case A_ADD_SRC:
+	case A_DELETE_SRC:
+		addr = ntohl(ip->ip_src.s_addr);
+		break;
+	case A_ADD_DST:
+	case A_DELETE_DST:
+		addr = ntohl(ip->ip_dst.s_addr);
+		break;
+	default:
+		printf("userfw_ipset_bitmap_ip: unknown opcode %d called used with action_add_delete_ip()\n", a->op);
+		return 0;
+	}
+
+	map = get_instance(a->args[0].uint16.value);
+	if (map == NULL)
+		return 0;
+
+	if (addr < map->first_ip || addr > map->last_ip)
+		return 0;
+
+	id = ip_to_id(map, addr);
+
+	switch (a->op)
+	{
+	case A_ADD_SRC:
+	case A_ADD_DST:
+		bitmap_ip_add(map, &id);
+		break;
+	case A_DELETE_SRC:
+	case A_DELETE_DST:
+		bitmap_ip_del(map, &id);
+		break;
+	}
+
+	return 0;
+}
+
+static userfw_action_descr bitmap_ip_actions[] = {
+	{A_ADD_SRC,	1,	{T_UINT16},	"add-src", action_add_delete_ip}
+	,{A_ADD_DST,	1,	{T_UINT16},	"add-dst", action_add_delete_ip}
+	,{A_DELETE_SRC,	1,	{T_UINT16},	"delete-src", action_add_delete_ip}
+	,{A_DELETE_DST,	1,	{T_UINT16},	"delete-dst", action_add_delete_ip}
+};
+
+static int
 match_bitmap_ip(struct mbuf **mb, userfw_chk_args *args, userfw_match *m, userfw_cache *cache, userfw_arg *marg)
 {
 	struct bitmap_ip *map = NULL;
@@ -401,10 +463,10 @@ static userfw_modinfo ipset_bitmap_ip_modinfo =
 {
 	.id = USERFW_IPSET_BITMAP_IP_MOD,
 	.name = "ipset_bitmap_ip",
-	.nactions = 0,
+	.nactions = sizeof(bitmap_ip_actions)/sizeof(bitmap_ip_actions[0]),
 	.nmatches = sizeof(bitmap_ip_matches)/sizeof(bitmap_ip_matches[0]),
 	.ncmds = sizeof(bitmap_ip_cmds)/sizeof(bitmap_ip_cmds[0]),
-	.actions = NULL,
+	.actions = bitmap_ip_actions,
 	.matches = bitmap_ip_matches,
 	.cmds = bitmap_ip_cmds
 };
